@@ -1,0 +1,21 @@
+name: robust-ops-email-classifier
+description: |
+  A multi-step environment for evaluating AI robustness in phishing detection.
+  Agents must classify emails under noisy signals and revise decisions.
+
+entry_point: env.environment:RobustOpsEnv
+
+max_steps: 2
+
+action_space:
+  type: discrete
+  actions:
+    - classify
+    - revise
+    - flag_uncertain
+
+observation_space:
+  type: text
+
+reward:
+  type: scalar
