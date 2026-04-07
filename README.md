@@ -1,3 +1,10 @@
+title: RobustOps
+colorFrom: blue
+colorTo: green
+sdk: docker
+app_file: inference.py
+pinned: false
+
 # RobustOps: Multi-Step Email Classification Environment
 
 > A minimal evaluation environment for testing robustness, uncertainty handling, and self-correction in AI agents.

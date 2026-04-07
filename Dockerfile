@@ -14,4 +14,4 @@ COPY . /app
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Default command
-CMD ["python3", "evaluate_agents.py"]
+CMD ["python3", "inference.py"]
