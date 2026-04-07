@@ -113,6 +113,8 @@ async def run_submission():
         rewards_str = ",".join(f"{r:.2f}" for r in rewards)
         print(f"[END] success={str(success).lower()} steps={steps_taken} score={score:.2f} rewards={rewards_str}", flush=True)
 
-if __name__ == "__main__":
-    # Start server on port 7860 (Hugging Face default)
+def main_server():
     uvicorn.run(app, host="0.0.0.0", port=7860)
+
+if __name__ == "__main__":
+    main_server()
