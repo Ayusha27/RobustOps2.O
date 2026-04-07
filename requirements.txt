@@ -2,3 +2,5 @@ pydantic
 matplotlib
 openai
 python-dotenv
+fastapi
+uvicorn
