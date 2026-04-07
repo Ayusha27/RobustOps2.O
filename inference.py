@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 from env.environment import RobustOpsEnv
 from env.models import Action
+import time
 
 # Load variables from .env for local testing
 load_dotenv() 
@@ -79,3 +80,8 @@ def run_submission():
 
 if __name__ == "__main__":
     run_submission()
+ 
+    # REQUIRED: Keep the Space "Running" so the validator can check files
+    # Without this, the container exits and the checker fails.
+    while True:
+        time.sleep(10)
