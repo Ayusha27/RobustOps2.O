@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build-meta"
+
+[project]
+name = "robust-ops-email-classifier"
+version = "0.1.0"
+description = "A multi-step environment for evaluating AI robustness in phishing detection."
+dependencies = [
+    "pydantic",
+    "matplotlib",
+    "openai",
+    "python-dotenv",
+    "fastapi",
+    "uvicorn"
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["env*"]
