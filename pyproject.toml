@@ -17,7 +17,7 @@ dependencies = [
 ]
 
 [project.scripts]
-server = "inference:main_server"
+server = "server.app:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
