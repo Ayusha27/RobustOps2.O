@@ -1,2 +1,4 @@
 pydantic
 matplotlib
+openai
+python-dotenv
