@@ -2,9 +2,8 @@ import uvicorn
 from inference import app
 
 def main():
-    """Standardized entry point for multi-mode deployment."""
+    """Main entry point for multi-mode deployment."""
     uvicorn.run(app, host="0.0.0.0", port=7860)
 
 if __name__ == "__main__":
     main()
-       
