@@ -43,76 +43,85 @@ async def reset_endpoint():
     return {"status": "success", "message": "Environment reset"}
 
 # --- 3. Core Logic & Logging ---
-def get_llm_decision(signals):
-    """Encapsulated LLM logic using the OpenAI client."""
+async def get_llm_decision(signals):
+    """Added deeper error handling and retries."""
     prompt = (
         f"Analyze these phishing signals: {signals}. "
         "Respond with exactly one word: 'spam', 'not_spam', or 'uncertain'."
     )
-    try:
-        response = client.chat.completions.create(
-            model=MODEL_NAME,
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=10
-        )
-        answer = response.choices[0].message.content.lower()
-        if "uncertain" in answer: return None
-        return "spam" if "spam" in answer else "not_spam"
-    except Exception:
-        return None
+    for attempt in range(3): # Try 3 times before giving up
+        try:
+            response = client.chat.completions.create(
+                model=MODEL_NAME,
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=10,
+                timeout=15.0 # Don't let the LLM hang forever
+            )
+            if not response.choices:
+                continue
+                
+            answer = response.choices[0].message.content.lower()
+            if "uncertain" in answer: return None
+            return "spam" if "spam" in answer else "not_spam"
+        except Exception as e:
+            print(f"LLM Attempt {attempt+1} failed: {e}", flush=True)
+            await asyncio.sleep(1) # Wait a second before retrying
+    return None
 
 async def run_submission():
-    """Main execution logic with mandatory stdout formatting."""
+    """Ensures a clean exit and logs every error."""
     steps_taken = 0
     score = 0.0
     success = False
     rewards = []
     
-    # Rule: [START] line
     print(f"[START] task={TASK_NAME} env={BENCHMARK} model={MODEL_NAME}", flush=True)
     
-    env = RobustOpsEnv()
-    
     try:
-        obs = env.reset()
-        for step in range(1, 3):
-            # Parse signals
-            try:
-                signals_str = obs.message.split("Signals: ")[-1]
-                signals = ast.literal_eval(signals_str)
-            except:
-                signals = ["urgent_tone"]
+        # Wrap the env init in a try-block
+        try:
+            env = RobustOpsEnv()
+            obs = env.reset()
+        except Exception as e:
+            print(f"Environment Reset Failed: {e}", flush=True)
+            return # Exit if we can't even start
 
-            decision = get_llm_decision(signals)
-            
-            if decision is None:
-                action_type, action_content = "flag_uncertain", None
-            else:
-                action_type = "classify" if step == 1 else "revise"
+        for step in range(1, 3):
+            try:
+                # 1. Parse signals carefully
+                signals = ["urgent_tone"]
+                if "Signals: " in obs.message:
+                    signals_str = obs.message.split("Signals: ")[-1]
+                    signals = ast.literal_eval(signals_str)
+
+                # 2. Get decision
+                decision = await get_llm_decision(signals) # Make sure this is awaited if using async
+                
+                action_type = "flag_uncertain" if decision is None else ("classify" if step == 1 else "revise")
                 action_content = decision
 
-            # Step interaction
-            obs, reward_obj, done, info = env.step(Action(action_type=action_type, content=action_content))
-            
-            reward = reward_obj.value
-            rewards.append(reward)
-            steps_taken = step
-            
-            # Rule: [STEP] line with 2 decimal rewards and lowercase booleans
-            print(f"[STEP] step={step} action={action_type} reward={reward:.2f} done={str(done).lower()} error=null", flush=True)
+                # 3. Step interaction
+                obs, reward_obj, done, info = env.step(Action(action_type=action_type, content=action_content))
+                
+                reward = reward_obj.value
+                rewards.append(reward)
+                steps_taken = step
+                
+                print(f"[STEP] step={step} action={action_type} reward={reward:.2f} done={str(done).lower()} error=null", flush=True)
 
-            if done: break
+                if done: break
+            except Exception as step_error:
+                print(f"[STEP] step={step} action=error reward=0.00 done=true error={type(step_error).__name__}", flush=True)
+                break
 
-        score = info.get("score", 0.0)
+        score = info.get("score", 0.0) if 'info' in locals() else 0.0
         success = score >= 0.5
 
-    except Exception:
-        pass
+    except Exception as fatal_error:
+        print(f"Fatal Traceback: {fatal_error}", flush=True)
     finally:
-        # Rule: [END] always emitted
-        rewards_str = ",".join(f"{r:.2f}" for r in rewards)
+        rewards_str = ",".join(f"{r:.2f}" for r in rewards) if rewards else "0.00"
         print(f"[END] success={str(success).lower()} steps={steps_taken} score={score:.2f} rewards={rewards_str}", flush=True)
-
 def main_server():
     uvicorn.run(app, host="0.0.0.0", port=7860)
 
