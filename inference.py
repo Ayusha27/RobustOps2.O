@@ -12,8 +12,8 @@ from env.models import Action
 load_dotenv()
 
 # --- 1. Configuration & Validation ---
-API_BASE_URL = os.getenv("API_BASE_URL", "https://api-inference.huggingface.co/v1")
-MODEL_NAME = os.getenv("MODEL_NAME", "meta-llama/Llama-3-8B-Instruct")
+API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
+MODEL_NAME = os.getenv("MODEL_NAME", "meta-llama/Meta-Llama-3-70B-Instruct:novita")
 HF_TOKEN = os.getenv("HF_TOKEN")
 
 TASK_NAME = "phishing-detection"
